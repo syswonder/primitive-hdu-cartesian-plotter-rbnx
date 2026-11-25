@@ -1,7 +1,7 @@
 manifestVersion: 1
 
 package:
-  name: robonix.primitive.hdu.plotter
+  name: robonix.primitive.hdu.cartesian.plotter
   version: 0.1.0
   description: XYZ 三轴写字机 primitive — 基于 SDK 的 PLC/TCP 传输、逐点轨迹、回零、参数与状态。
   tags: [primitive, plotter, xyz, gantry, plc, tcp]
@@ -18,10 +18,22 @@ start: bash scripts/start.sh
 # capabilities/lib/plotter/{srv,msg}.
 capabilities:
   - name: robonix/primitive/plotter/driver
+    path: capabilities/plotter/driver.v1.toml
+    transport: grpc
   - name: robonix/primitive/plotter/trajectory
+    path: capabilities/plotter/trajectory.v1.toml
+    transport: grpc
   - name: robonix/primitive/plotter/home
+    path: capabilities/plotter/home.v1.toml
+    transport: [grpc, mcp]
   - name: robonix/primitive/plotter/set_params
+    path: capabilities/plotter/set_params.v1.toml
+    transport: [grpc, mcp]
   - name: robonix/primitive/plotter/status
+    path: capabilities/plotter/status.v1.toml
+    transport: grpc
   - name: robonix/primitive/plotter/geometry
+    path: capabilities/plotter/geometry.v1.toml
+    transport: grpc
 
 depends: []
