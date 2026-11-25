@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-"""Frame and payload tests for the vendored SDK protocol."""
+"""Frame and payload tests for the vendored PLC protocol layer."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ import struct
 
 import pytest
 
-from robonix_sdk import protocol as p
+from xyz_plotter.sdk import protocol as p
 
 
 def test_ping_frame_matches_documented_layout():

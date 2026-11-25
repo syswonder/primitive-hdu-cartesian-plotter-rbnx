@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: MIT
-"""Vendored session layer of the XYZ plotter SDK.
+"""PLC session layer of the XYZ plotter primitive.
 
-This package is private to ``primitive-hdu-cartesian-plotter-rbnx``. Robonix
-consumers talk to the ``robonix/primitive/plotter/*`` contracts, never to
-these modules.
+This subpackage is private to ``primitive-hdu-cartesian-plotter-rbnx``.
+Robonix consumers talk to the ``robonix/primitive/plotter/*`` contracts,
+never to these modules.
 
-It mirrors ``SDK/robonix_sdk/{protocol,client}.py`` and deliberately does
-not import the SDK's geometry layer (``image`` / ``trajectory`` / ``text``),
-which belongs to the skill and needs numpy/Pillow.
+The code was vendored from the upstream PLC SDK's ``protocol`` / ``client``
+modules. The SDK's geometry layer (``image`` / ``trajectory`` / ``text``)
+is deliberately not vendored here: it belongs to the skills and needs
+numpy/Pillow.
 """
 
 from .client import DEFAULT_PORT, ProtocolError, RobonixClient

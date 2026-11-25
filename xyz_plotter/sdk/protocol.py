@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-"""Robonix XYZ plotter wire protocol — vendored from ``SDK/robonix_sdk``.
+"""Robonix XYZ plotter wire protocol — vendored from the upstream SDK.
 
 Frame format (little-endian)::
 
@@ -20,7 +20,8 @@ MOVE_LINEAR carries ``x, y, z = 3 x f64``; SET_PARAM carries
 ``vel, acc, dec, jerk, z_up, z_down = 6 x f32``.
 
 This module is transport-only: it knows bytes, not sockets and not
-Robonix. The full protocol description lives in ``SDK/docs/protocol.md``.
+Robonix. The deployment-side protocol summary lives in
+``docs/PLC_PROTOCOL.md`` of the robot repository.
 """
 
 from __future__ import annotations

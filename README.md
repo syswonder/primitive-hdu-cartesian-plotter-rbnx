@@ -5,11 +5,9 @@ package that speaks TCP to the PLC and owns the
 `robonix/primitive/plotter/*` namespace: framing, CRC16-Modbus, point-by-point
 ACKs, homing, global motion parameters, and the synthesized status stream.
 
-Catalog name: `robonix.primitive.xyz.plotter`.
-
-The wire protocol, coordinate conventions, and reference client come from the
-repository [`SDK/`](../../../SDK). Skills never import the SDK transport; they
-call the contracts below over gRPC.
+The wire protocol, coordinate conventions, and reference client were vendored
+from the upstream PLC SDK into [`xyz_plotter/sdk/`](xyz_plotter/sdk/). Skills
+never import that transport; they call the contracts below over gRPC.
 
 ## Capability surface
 
@@ -63,11 +61,11 @@ primitive-hdu-cartesian-plotter-rbnx/
 │   └── lib/plotter/{srv,msg}/...       # package-local IDL
 ├── xyz_plotter/
 │   ├── __init__.py
-│   └── main.py                         # lifecycle, mutex, status stream
-├── robonix_sdk/                        # vendored SDK transport
-│   ├── protocol.py                     # SOF / CRC16-Modbus / f32 / f64
-│   ├── client.py                       # per-point ACK, SET_PARAM, HOME, CLOSE
-│   └── errors.py
+│   ├── main.py                         # lifecycle, mutex, status stream
+│   └── sdk/                            # vendored PLC transport
+│       ├── __init__.py                 # public re-exports
+│       ├── protocol.py                 # SOF / CRC16-Modbus / f32 / f64
+│       └── client.py                   # per-point ACK, SET_PARAM, HOME, CLOSE
 ├── scripts/
 │   ├── build.sh                        # rbnx codegen
 │   └── start.sh                        # exec main
@@ -76,9 +74,10 @@ primitive-hdu-cartesian-plotter-rbnx/
 └── CAPABILITY.md
 ```
 
-`xyz_plotter/main.py` maps Robonix contracts onto the SDK client. The
-vendored modules under `robonix_sdk/` mirror `SDK/robonix_sdk/{protocol,
-client}.py` and exist only for this primitive; skills never import them.
+`xyz_plotter/main.py` maps Robonix contracts onto the vendored client. The
+modules under `xyz_plotter/sdk/` were copied from the upstream PLC SDK's
+`protocol` / `client` modules and exist only for this primitive; skills never
+import them.
 
 ## Config (passed via `Driver(CMD_INIT, config_json)`)
 

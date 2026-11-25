@@ -9,9 +9,9 @@ Owns ``robonix/primitive/plotter/*``:
   * ``set_params`` global motion profile + pen heights (SET_PARAM, gRPC + MCP).
   * ``status``     topic_out (gRPC server stream) at ``status_rate_hz``.
 
-All PLC-specific bytes live in the vendored ``robonix_sdk`` (mirrors
-``SDK/robonix_sdk``). This module only maps Robonix contracts to SDK
-calls and enforces the single-trajectory mutex.
+All PLC-specific bytes live in the vendored ``xyz_plotter.sdk`` subpackage
+(vendored from the upstream PLC SDK). This module only maps Robonix
+contracts to SDK calls and enforces the single-trajectory mutex.
 
 Wire facts that shape this module:
 
@@ -41,7 +41,7 @@ from plotter_mcp import (  # type: ignore  # noqa: E402  (rbnx codegen)
     SetParams_Response as MCPSetParams_Response,
 )
 
-from robonix_sdk import ProtocolError, RobonixClient  # noqa: E402
+from xyz_plotter.sdk import RobonixClient  # noqa: E402
 
 log = logging.getLogger("xyz_plotter")
 logging.basicConfig(

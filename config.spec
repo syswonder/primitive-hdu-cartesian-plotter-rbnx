@@ -3,9 +3,10 @@
 # This file documents the mapping passed as this package's `config:` value in
 # robonix_manifest.yaml. Missing keys use the defaults below.
 #
-# Protocol and coordinate conventions come from SDK/docs/protocol.md:
-# paper origin (0,0) at the lower-left corner, +X right, +Y up, paper
-# surface at z = -50, machine zero at (0,0,0) = 50 mm above the paper.
+# Protocol and coordinate conventions come from docs/PLC_PROTOCOL.md and the
+# upstream PLC SDK: paper origin (0,0) at the lower-left corner, +X right,
+# +Y up, paper surface at z = -50, machine zero at (0,0,0) = 50 mm above
+# the paper.
 
 config:
   # string, default: 192.168.33.130.

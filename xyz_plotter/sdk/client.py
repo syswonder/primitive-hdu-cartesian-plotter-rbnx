@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MIT
 """RobonixClient — TCP session layer for the XYZ plotter PLC.
 
-Vendored from ``SDK/robonix_sdk/client.py``. Semantics that matter when
-swapping protocol or PLC vendor:
+Vendored from the upstream SDK's ``client`` module. Semantics that matter
+when swapping protocol or PLC vendor:
 
 1. The PLC is the server (``SktTCPAccept`` on port 2000); this class is
    the client.
