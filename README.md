@@ -1,6 +1,6 @@
 # primitive-hdu-cartesian-plotter-rbnx
 
-Robonix **primitive** for the XYZ Cartesian pen plotter. It is the only
+Robonix primitive for the XYZ Cartesian pen plotter. It is the only
 package that speaks TCP to the PLC and owns the
 `robonix/primitive/plotter/*` namespace: framing, CRC16-Modbus, point-by-point
 ACKs, homing, global motion parameters, and the synthesized status stream.
@@ -20,8 +20,8 @@ transport; they call the contracts below over gRPC.
 | `robonix/primitive/plotter/geometry` | rpc | gRPC | `Geometry(Empty)` → drawable area + pen heights from config |
 | `robonix/primitive/plotter/status` | topic_out | gRPC stream | `Status(Empty) → stream PlotterStatus` |
 
-`status` is a msg-backed topic. The current PLC firmware has **no STATUS
-query**, so the stream is synthesized from local state: socket connectivity,
+`status` is a msg-backed topic. The current PLC firmware has no STATUS
+query, so the stream is synthesized from local state: socket connectivity,
 busy flag, last commanded position, and the most recent error.
 
 `home` and `set_params` are registered as both gRPC and MCP so Pilot/LLM can
@@ -30,7 +30,7 @@ parameters back; the primitive caches the last successfully sent profile.
 
 ## Boot ordering
 
-This primitive must boot **before** any text or draw skill in the deployment
+This primitive must boot before any text or draw skill in the deployment
 manifest. `rbnx boot` has no defer/retry, and each skill resolves
 `primitive/plotter/{trajectory,home}` during activation.
 

@@ -2,7 +2,7 @@
 description: XYZ pen-plotter primitive — direct PLC motion, homing, and the global speed/pen-height profile.
 ---
 
-# XYZ plotter primitive (`cartesian_plotter`)
+# Cartesian_plotter primitive
 
 Owns the three-axis gantry and the TCP connection to its PLC. Skills convert
 text or images into `(x, y, z)` waypoints; this primitive executes them.
@@ -23,10 +23,10 @@ completes.
 
 ### `plotter_set_params`
 
-Set the **global** motion profile and pen heights for subsequent motions.
+Set the global motion profile and pen heights for subsequent motions.
 SET_PARAM does not move the machine.
 
-Arguments (all `float64`; **0 means "keep the current value"**):
+Arguments (all `float64`; 0 means "keep the current value"):
 
 | Field | Unit | Meaning |
 | --- | --- | --- |
@@ -49,7 +49,7 @@ Rules:
 - The profile persists until the next `plotter_set_params` or a PLC restart.
   If the PLC is offline the primitive caches the values and reapplies them on
   reconnect.
-- There is **no readback**: the primitive mirrors the last values it sent.
+- There is no readback: the primitive mirrors the last values it sent.
   Never claim to know PLC-side values that were set by another process.
 - The profile is global; there is no per-point velocity.
 - Pen heights in a trajectory are encoded in each waypoint's `z`. The skills
