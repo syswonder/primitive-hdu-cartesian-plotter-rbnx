@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-"""Robonix XYZ plotter wire protocol — vendored from the upstream SDK.
+"""Robonix XYZ plotter wire protocol.
 
 Frame format (little-endian)::
 
@@ -10,8 +10,6 @@ Frame format (little-endian)::
     5       1     SEQ   sequence number (U8, echoed by the ACK)
     6       LEN   PAYLOAD
     6+LEN   2     CRC16-Modbus over CMD..PAYLOAD
-
-Implemented commands (matching the PLC's ``tcp_test.XML``):
 
     0x00 PING / 0x01 MOVE_LINEAR / 0x03 HOME / 0x04 SET_PARAM / 0x0A CLOSE
     0x80 ACK (status U8, err U16, busy U8)

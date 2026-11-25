@@ -5,9 +5,9 @@ package that speaks TCP to the PLC and owns the
 `robonix/primitive/plotter/*` namespace: framing, CRC16-Modbus, point-by-point
 ACKs, homing, global motion parameters, and the synthesized status stream.
 
-The wire protocol, coordinate conventions, and reference client were vendored
-from the upstream PLC SDK into [`xyz_plotter/sdk/`](xyz_plotter/sdk/). Skills
-never import that transport; they call the contracts below over gRPC.
+The wire protocol and the reference client live in
+[`cartesian_plotter/sdk/`](cartesian_plotter/sdk/). Skills never import that
+transport; they call the contracts below over gRPC.
 
 ## Capability surface
 
@@ -36,7 +36,7 @@ manifest. `rbnx boot` has no defer/retry, and each skill resolves
 
 ## Driver-init lifecycle
 
-`scripts/start.sh` execs `python3 -m xyz_plotter.main`; it does not spawn ROS
+`scripts/start.sh` execs `python3 -m cartesian_plotter.main`; it does not spawn ROS
 or a PLC subprocess.
 
 1. `CMD_INIT`: parse and validate the manifest `config:` block. With
@@ -57,9 +57,9 @@ or a PLC subprocess.
 primitive-hdu-cartesian-plotter-rbnx/
 ├── package_manifest.yaml
 ├── capabilities/
-│   ├── plotter/{driver,trajectory,home,set_params,status}.v1.toml
+│   ├── plotter/{driver,trajectory,home,set_params,status,geometry}.v1.toml
 │   └── lib/plotter/{srv,msg}/...       # package-local IDL
-├── xyz_plotter/
+├── cartesian_plotter/
 │   ├── __init__.py
 │   ├── main.py                         # lifecycle, mutex, status stream
 │   └── sdk/                            # vendored PLC transport
@@ -74,21 +74,24 @@ primitive-hdu-cartesian-plotter-rbnx/
 └── CAPABILITY.md
 ```
 
-`xyz_plotter/main.py` maps Robonix contracts onto the vendored client. The
-modules under `xyz_plotter/sdk/` were copied from the upstream PLC SDK's
-`protocol` / `client` modules and exist only for this primitive; skills never
-import them.
+`cartesian_plotter/main.py` maps Robonix contracts onto the transport client.
+The modules under `cartesian_plotter/sdk/` are transport only and exist for
+this primitive; skills never import them.
 
 ## Config (passed via `Driver(CMD_INIT, config_json)`)
 
 ```yaml
-host:              192.168.33.130   # PLC IPv4 / hostname
+host:              ""              # PLC IPv4 / hostname (required, no default)
 port:              2000             # PLC TCP port
 timeout_s:         30.0             # connect timeout and per-point ACK floor
 connect_on_init:   true             # false -> first motion call connects
 units:             mm               # only "mm" is supported
 z_up:              -46.0            # pen-up height
 z_down:            -50.0            # pen-down height; calibrate by hand
+z_min:             -50.0            # lower Z travel limit (pen-height validation)
+z_max:             0.0              # upper Z travel limit
+area_x_max:        180.0            # drawable width, mm (default for this rig)
+area_y_max:        150.0            # drawable height, mm
 velocity:          20.0             # mm/s
 acceleration:      300.0            # mm/s^2
 deceleration:      300.0            # mm/s^2
@@ -97,7 +100,7 @@ status_rate_hz:    2.0              # synthesized status stream rate
 max_points:        100000           # max waypoints in one trajectory
 ```
 
-Pen heights must satisfy `-50 <= z_down < z_up <= 0` in the paper frame.
+Pen heights must satisfy the configured `z_min <= z_down < z_up <= z_max` (defaults `-50` / `0`).
 Machine zero `(0,0,0)` is 50 mm above the paper's lower-left corner, so the
 paper surface and `z_down` are `-50`.
 
@@ -122,25 +125,34 @@ every subsequent `MOVE_LINEAR` until changed or the PLC restarts.
 This primitive knows coordinates, frames, CRC, and ACKs. It does not know
 what a glyph or an image is; that belongs to the skills.
 
-## Build / run standalone
+## Build / run inside a deployment
+
+This package is not standalone: both scripts resolve the deployment root by
+going three levels up (the layouts `rbnx` uses are
+`<deploy>/packages/primitives/<pkg>` and `<deploy>/rbnx-boot/cache/<pkg>`) and
+share the deployment-wide `.venv`. Set `RBNX_DEPLOY_ROOT` to override.
 
 ```bash
 bash scripts/build.sh          # uv sync + rbnx codegen
-uv run --project ../../.. pytest tests -q
 ROBONIX_ATLAS=127.0.0.1:50051 \
     bash scripts/start.sh      # registers with Atlas and awaits Init
 ```
 
-`scripts/build.sh` runs the shared root `uv_sync.sh` before codegen, and
-`scripts/start.sh` uses the root `.venv` interpreter. Normally `rbnx boot`
-launches the primitive from the manifest.
+Tests run against the deployment venv:
+
+```bash
+cd "${RBNX_DEPLOY_ROOT:?set RBNX_DEPLOY_ROOT}" && \
+    uv run pytest packages/primitives/primitive-hdu-cartesian-plotter-rbnx/tests -q
+```
+
+Normally `rbnx boot` launches the primitive from the manifest.
 
 ## Verification
 
 ```bash
 rbnx caps | grep primitive/plotter
-# Expected: xyz_plotter provider with
-#   robonix/primitive/plotter/{driver,trajectory,home,set_params,status}
+# Expected: cartesian_plotter provider with
+#   robonix/primitive/plotter/{driver,trajectory,home,set_params,status,geometry}
 ```
 
 Then ask Pilot to run `plotter_home` and confirm the status stream reports
@@ -149,4 +161,4 @@ the minimum end-to-end check before drawing.
 
 ## License
 
-MIT. See [LICENSE](../../../LICENSE).
+MIT. See the deployment repository's LICENSE file.

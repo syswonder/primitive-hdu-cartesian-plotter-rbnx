@@ -3,15 +3,13 @@
 # This file documents the mapping passed as this package's `config:` value in
 # robonix_manifest.yaml. Missing keys use the defaults below.
 #
-# Protocol and coordinate conventions come from docs/PLC_PROTOCOL.md and the
-# upstream PLC SDK: paper origin (0,0) at the lower-left corner, +X right,
-# +Y up, paper surface at z = -50, machine zero at (0,0,0) = 50 mm above
-# the paper.
+# Coordinates: paper origin (0,0) at the lower-left corner, +X right, +Y up;
+# paper surface z = -50; machine zero (0,0,0) is 50 mm above the paper.
 
 config:
-  # string, default: 192.168.33.130.
+  # string, required (no default).
   # PLC IPv4/hostname. The primitive is the only process that talks TCP.
-  host: 192.168.33.130
+  host: ""
 
   # int, default: 2000. PLC TCP port, 1..65535.
   port: 2000
@@ -32,7 +30,8 @@ config:
   # and every contract value are millimetres.
   units: mm
 
-  # float mm, default: -46.0. Pen-up height (4 mm above the paper).
+  # float mm, default: -46.0. Pen-up height (4 mm above the paper on this
+  # rig); machine-specific: verify it by hand.
   # Must satisfy z_min <= z_down < z_up <= z_max; z is encoded in every
   # waypoint, so the PLC does not use its own z_up/z_down for motion.
   z_up: -46.0
@@ -51,7 +50,7 @@ config:
 
   # float mm, default: 180.0. Drawable area width in the paper frame
   # (origin (0,0) at the paper corner; the x minimum is always 0).
-  # Reported to skills via PlotterStatus; override for other rigs.
+  # Reported to skills via the geometry contract; override for other rigs.
   area_x_max: 180.0
 
   # float mm, default: 150.0. Drawable area height (y minimum always 0).
@@ -60,7 +59,7 @@ config:
   # Global motion profile, sent with CMD_SET_PARAM (6 x f32) on connect
   # and on every set_params call. The PLC has no per-point profile.
   # velocity mm/s (> 0), acceleration/deceleration mm/s^2 (> 0),
-  # jerk mm/s^3 (> 0). These mirror the SDK defaults.
+  # jerk mm/s^3 (> 0).
   # Partial set_params calls may pass 0 to keep the current value.
   velocity: 20.0
   acceleration: 300.0

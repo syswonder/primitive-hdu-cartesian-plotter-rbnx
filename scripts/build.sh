@@ -6,12 +6,16 @@
 # is `rbnx codegen`.
 set -euo pipefail
 PKG="${RBNX_PACKAGE_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
-ROOT="$(cd "$PKG/../../.." && pwd)"
+ROOT="${RBNX_DEPLOY_ROOT:-$(cd "$PKG/../../.." && pwd)}"
+if [[ ! -f "$ROOT/scripts/uv_sync.sh" ]]; then
+    echo "[cartesian_plotter/build] ERR: deployment root not found at $ROOT (missing scripts/uv_sync.sh) — build this package from its rbnx deployment, or set RBNX_DEPLOY_ROOT." >&2
+    exit 2
+fi
 cd "$PKG"
 
 CLEAN="${RBNX_BUILD_CLEAN:-}"
 if [[ "$CLEAN" == "1" ]]; then
-    echo "[xyz_plotter/build] clean: removing rbnx-build/"
+    echo "[cartesian_plotter/build] clean: removing rbnx-build/"
     rm -rf rbnx-build
 fi
 mkdir -p rbnx-build
@@ -26,8 +30,8 @@ export RBNX_CODEGEN_PYTHON="$ROOT/.venv/bin/python"
 FLAGS=(--out-dir "$PKG/rbnx-build/codegen" --mcp)
 [[ "$CLEAN" == "1" ]] && FLAGS+=(--clean)
 
-echo "[xyz_plotter/build] rbnx codegen ${FLAGS[*]}"
+echo "[cartesian_plotter/build] rbnx codegen ${FLAGS[*]}"
 rbnx codegen -p "$PKG" "${FLAGS[@]}"
 
 touch "$PKG/rbnx-build/.rbnx-built"
-echo "[xyz_plotter/build] done."
+echo "[cartesian_plotter/build] done."

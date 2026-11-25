@@ -2,7 +2,7 @@
 description: XYZ pen-plotter primitive — direct PLC motion, homing, and the global speed/pen-height profile.
 ---
 
-# XYZ plotter primitive (`xyz_plotter`)
+# XYZ plotter primitive (`cartesian_plotter`)
 
 Owns the three-axis gantry and the TCP connection to its PLC. Skills convert
 text or images into `(x, y, z)` waypoints; this primitive executes them.
@@ -34,17 +34,17 @@ Arguments (all `float64`; **0 means "keep the current value"**):
 | `acceleration` | mm/s² | Acceleration |
 | `deceleration` | mm/s² | Deceleration |
 | `jerk` | mm/s³ | Jerk limit |
-| `z_up` | mm | Pen-up height (default -46) |
-| `z_down` | mm | Pen-down height (default -50) |
+| `z_up` | mm | Pen-up height (default -46; machine-specific) |
+| `z_down` | mm | Pen-down height (default -50; machine-specific) |
 
 Rules:
 
 - Pass only the fields you want to change; send `0` for the rest. Example:
   `{"velocity": 40, "acceleration": 0, "deceleration": 0, "jerk": 0,
   "z_up": 0, "z_down": 0}` doubles speed and keeps everything else.
-- After merging, pen heights must satisfy `-50 <= z_down < z_up <= 0`
-  (machine travel). On this machine the paper surface is `z = -50` and pen-up
-  is `z = -46`; changing the paper or pen requires recalibration.
+- After merging, pen heights must satisfy the primitive's configured
+  `z_min <= z_down < z_up <= z_max` (defaults `-50` / `0` on this rig).
+  Changing the paper or pen requires recalibration.
 - Motion values must be finite and positive after merging.
 - The profile persists until the next `plotter_set_params` or a PLC restart.
   If the PLC is offline the primitive caches the values and reapplies them on
@@ -63,6 +63,8 @@ Rules:
   draw skills to execute waypoint lists.
 - `robonix/primitive/plotter/status` — gRPC server stream with connection,
   busy, last error, and last commanded position.
+- `robonix/primitive/plotter/geometry` — gRPC only; static drawable area and
+  pen heights, read once by the skills on activation.
 - `robonix/primitive/plotter/driver` — lifecycle only.
 
 ## Coordinates and limits
@@ -70,7 +72,7 @@ Rules:
 - Units: millimetres. Paper origin `(0, 0)` is the lower-left corner; +X right,
   +Y up.
 - Machine zero `(0, 0, 0)` is 50 mm above the paper; paper surface `z = -50`.
-- Travel: X 0–180 mm, Y 0–150 mm.
+- Travel: X 0–`area_x_max` mm, Y 0–`area_y_max` mm (defaults 180 × 150).
 - The PLC has no STOP command. On failure the pen stops in place; recover with
   `plotter_home`.
 - Always home after power-up before the first motion.

@@ -10,7 +10,8 @@
 # z_up, z_down = 6 x f32. The PLC has no per-point profile.
 #
 # Units: mm, mm/s, mm/s^2, mm/s^3.
-# Pen heights must satisfy -50 <= z_down < z_up <= 0 (machine travel).
+# Pen heights must satisfy the primitive's configured
+# z_min <= z_down < z_up <= z_max.
 float64 velocity
 float64 acceleration
 float64 deceleration

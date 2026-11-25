@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-"""xyz_plotter — Robonix primitive for an XYZ Cartesian pen plotter.
+"""cartesian_plotter — Robonix primitive for an XYZ Cartesian pen plotter.
 
 Owns ``robonix/primitive/plotter/*``:
 
@@ -8,10 +8,11 @@ Owns ``robonix/primitive/plotter/*``:
   * ``home``       PLC ``MC_GroupHome`` routine (gRPC + MCP).
   * ``set_params`` global motion profile + pen heights (SET_PARAM, gRPC + MCP).
   * ``status``     topic_out (gRPC server stream) at ``status_rate_hz``.
+  * ``geometry``   static drawable area + pen heights (gRPC).
 
-All PLC-specific bytes live in the vendored ``xyz_plotter.sdk`` subpackage
-(vendored from the upstream PLC SDK). This module only maps Robonix
-contracts to SDK calls and enforces the single-trajectory mutex.
+All PLC-specific bytes live in the ``cartesian_plotter.sdk`` subpackage.
+This module only maps Robonix contracts to client calls and enforces the
+single-trajectory mutex.
 
 Wire facts that shape this module:
 
@@ -31,7 +32,7 @@ import time
 
 from robonix_api import Err, Ok, Primitive
 
-xyz_plotter = Primitive(id="xyz_plotter", namespace="robonix/primitive/plotter")
+plotter = Primitive(id="cartesian_plotter", namespace="robonix/primitive/plotter")
 
 import plotter_pb2  # type: ignore  # noqa: E402  (rbnx codegen)
 from plotter_mcp import (  # type: ignore  # noqa: E402  (rbnx codegen)
@@ -41,18 +42,18 @@ from plotter_mcp import (  # type: ignore  # noqa: E402  (rbnx codegen)
     SetParams_Response as MCPSetParams_Response,
 )
 
-from xyz_plotter.sdk import RobonixClient  # noqa: E402
+from cartesian_plotter.sdk import RobonixClient  # noqa: E402
 
-log = logging.getLogger("xyz_plotter")
+log = logging.getLogger("cartesian_plotter")
 logging.basicConfig(
     level=logging.INFO,
-    format="[xyz_plotter] %(levelname)s %(message)s",
+    format="[cartesian_plotter] %(levelname)s %(message)s",
 )
 
 
 _DEFAULTS = {
-    # SDK defaults: MatrixBox MX4001 at 192.168.33.130:2000.
-    "host": "192.168.33.130",
+    # No default host: the deployment manifest must always set it.
+    "host": "",
     "port": 2000,
     # Connect timeout and the floor for the per-point ACK timeout.
     "timeout_s": 30.0,
@@ -266,7 +267,7 @@ def _set_position(x: float, y: float, z: float) -> None:
 
 
 # ── lifecycle ────────────────────────────────────────────────────────
-@xyz_plotter.on_init
+@plotter.on_init
 def init(cfg: dict):
     """REGISTERED → INACTIVE. Parse config and optionally connect."""
     try:
@@ -292,7 +293,7 @@ def init(cfg: dict):
     return Ok()
 
 
-@xyz_plotter.on_activate
+@plotter.on_activate
 def activate():
     """INACTIVE → ACTIVE. Reconnect if the PLC dropped while inactive."""
     _state["active"] = True
@@ -308,7 +309,7 @@ def activate():
     return Ok()
 
 
-@xyz_plotter.on_deactivate
+@plotter.on_deactivate
 def deactivate():
     """ACTIVE → INACTIVE. Stops the status stream.
 
@@ -325,7 +326,7 @@ def deactivate():
     return Ok()
 
 
-@xyz_plotter.on_shutdown
+@plotter.on_shutdown
 def shutdown():
     """any → TERMINATED. Best-effort CMD_CLOSE, then drop the socket."""
     _state["stop"].set()
@@ -336,7 +337,7 @@ def shutdown():
 
 
 # ── trajectory ───────────────────────────────────────────────────────
-@xyz_plotter.grpc("robonix/primitive/plotter/trajectory")
+@plotter.grpc("robonix/primitive/plotter/trajectory")
 def trajectory(req, ctx):
     points = [(float(p.x), float(p.y), float(p.z)) for p in req.waypoints]
     total = len(points)
@@ -438,7 +439,7 @@ def _home_impl() -> tuple[bool, str, float]:
         _end()
 
 
-@xyz_plotter.grpc("robonix/primitive/plotter/home")
+@plotter.grpc("robonix/primitive/plotter/home")
 def home(req, ctx):
     success, message, elapsed = _home_impl()
     return plotter_pb2.Home_Response(
@@ -446,7 +447,7 @@ def home(req, ctx):
     )
 
 
-@xyz_plotter.mcp("robonix/primitive/plotter/home")
+@plotter.mcp("robonix/primitive/plotter/home")
 def home_tool(req: MCPHome_Request) -> MCPHome_Response:
     """Send the gantry to the PLC home position and wait for completion.
 
@@ -531,13 +532,13 @@ def _set_params_impl(req) -> tuple[bool, str]:
         _end()
 
 
-@xyz_plotter.grpc("robonix/primitive/plotter/set_params")
+@plotter.grpc("robonix/primitive/plotter/set_params")
 def set_params(req, ctx):
     success, message = _set_params_impl(req)
     return plotter_pb2.SetParams_Response(success=success, message=message)
 
 
-@xyz_plotter.mcp("robonix/primitive/plotter/set_params")
+@plotter.mcp("robonix/primitive/plotter/set_params")
 def set_params_tool(req: MCPSetParams_Request) -> MCPSetParams_Response:
     """Set the global motion profile used by subsequent trajectories.
 
@@ -555,7 +556,7 @@ def set_params_tool(req: MCPSetParams_Request) -> MCPSetParams_Response:
 
 
 # ── geometry ─────────────────────────────────────────────────────
-@xyz_plotter.grpc("robonix/primitive/plotter/geometry")
+@plotter.grpc("robonix/primitive/plotter/geometry")
 def geometry(req, ctx):
     """Report the static machine geometry from the deployment config.
 
@@ -617,7 +618,7 @@ def _status_message():
     )
 
 
-@xyz_plotter.grpc("robonix/primitive/plotter/status")
+@plotter.grpc("robonix/primitive/plotter/status")
 def status(req, ctx):
     """Server-streaming handler for the topic_out contract."""
     period = 1.0 / max(0.1, float(_state["cfg"]["status_rate_hz"]))
@@ -629,7 +630,7 @@ def status(req, ctx):
 
 
 def main() -> int:
-    xyz_plotter.run()
+    plotter.run()
     return 0
 
 

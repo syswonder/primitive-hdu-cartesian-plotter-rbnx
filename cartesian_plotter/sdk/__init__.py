@@ -5,10 +5,8 @@ This subpackage is private to ``primitive-hdu-cartesian-plotter-rbnx``.
 Robonix consumers talk to the ``robonix/primitive/plotter/*`` contracts,
 never to these modules.
 
-The code was vendored from the upstream PLC SDK's ``protocol`` / ``client``
-modules. The SDK's geometry layer (``image`` / ``trajectory`` / ``text``)
-is deliberately not vendored here: it belongs to the skills and needs
-numpy/Pillow.
+The image / trajectory / text geometry layers are intentionally not part of
+this package: they belong to the skills and need numpy/Pillow.
 """
 
 from .client import DEFAULT_PORT, ProtocolError, RobonixClient

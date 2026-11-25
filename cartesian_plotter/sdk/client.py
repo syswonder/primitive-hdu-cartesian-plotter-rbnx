@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: MIT
 """RobonixClient — TCP session layer for the XYZ plotter PLC.
 
-Vendored from the upstream SDK's ``client`` module. Semantics that matter
-when swapping protocol or PLC vendor:
+Semantics that matter when swapping protocol or PLC vendor:
 
 1. The PLC is the server (``SktTCPAccept`` on port 2000); this class is
    the client.
@@ -34,8 +33,6 @@ from . import protocol as proto
 DEFAULT_PORT = 2000
 
 # Conservative speed (mm/s) used to estimate the per-point ACK timeout.
-# The PLC defaults to vel=15; we deliberately estimate slower so a long
-# move is not misdiagnosed as a timeout.
 _TIMEOUT_SPEED_MM_S = 5.0
 
 
